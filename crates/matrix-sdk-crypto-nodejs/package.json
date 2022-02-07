@@ -1,0 +1,48 @@
+{
+  "name": "@turt2live/matrix-sdk-crypto-nodejs",
+  "version": "0.1.0-beta.8",
+  "description": "matrix-sdk-crypto crate for Node JS",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/matrix-org/matrix-rust-sdk",
+  "author": "Travis Ralston <travis@matrix.org>",
+  "license": "Apache-2.0",
+  "files": [
+    "package.json",
+    "README.md",
+    "check-exists.js",
+    "src",
+    "lib",
+    "!lib/index.node",
+    "Cargo.toml",
+    "Cargo.lock",
+    "build.rs",
+    "yarn.lock"
+  ],
+  "scripts": {
+    "rust:targets": "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc x86_64-unknown-linux-gnu i686-unknown-linux-gnu x86_64-apple-darwin",
+    "build:win": "yarn build:win:x64 && yarn build:win:ia32",
+    "build:win:x64": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target x86_64-pc-windows-msvc ./lib",
+    "build:win:ia32": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target i686-pc-windows-msvc ./lib",
+    "build:linux": "yarn build:linux:x64 && yarn build:linux:ia32",
+    "build:linux:x64": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target x86_64-unknown-linux-gnu ./lib",
+    "build:linux:ia32": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target i686-unknown-linux-gnu ./lib",
+    "build:darwin": "yarn build:darwin:x64",
+    "build:darwin:x64": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target x86_64-apple-darwin ./lib",
+    "build:types": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --platform ./lib",
+    "build:release": "yarn build:types && napi build --release ./lib",
+    "build:debug": "yarn build:types && napi build --js ./lib/napi-module.js --dts napi-module.d.ts ./lib",
+    "build:ts": "tsc",
+    "build:test": "napi build",
+    "prepublishOnly": "yarn build:ts && ./prepare-release.sh",
+    "postinstall": "node check-exists.js"
+  },
+  "dependencies": {
+    "@napi-rs/cli": "^2.2.0",
+    "shelljs": "^0.8.4"
+  },
+  "devDependencies": {
+    "@types/node": "^14",
+    "typescript": "^4.5.4"
+  }
+}

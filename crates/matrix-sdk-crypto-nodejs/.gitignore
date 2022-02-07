@@ -1,0 +1,6 @@
+node_modules
+napi-module.js
+napi-module.d.ts
+yarn-error.log
+/sled
+/lib
