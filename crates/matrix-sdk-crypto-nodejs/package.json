@@ -4,7 +4,7 @@
   "description": "matrix-sdk-crypto crate for Node JS",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
-  "repository": "https://github.com/matrix-org/matrix-rust-sdk",
+  "repository": "https://github.com/matrix-org/matrix-rust-sdk-bindings",
   "author": "Travis Ralston <travis@matrix.org>",
   "license": "Apache-2.0",
   "files": [

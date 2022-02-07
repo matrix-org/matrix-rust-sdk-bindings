@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use matrix_sdk_common::uuid::Uuid;
 use matrix_sdk_crypto::{OutgoingRequest, OutgoingRequests::*, ToDeviceRequest};
 use napi::bindgen_prelude::ToNapiValue;
 use napi_derive::napi;
-use ruma::{api::client::r0::keys::claim_keys::Request as KeysClaimRequest, events::EventContent};
+use ruma::{api::client::r0::keys::claim_keys::Request as KeysClaimRequest, events::EventContent, TransactionId};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Error};
 
@@ -32,7 +31,7 @@ pub enum RequestKind {
     KeysBackup = 7,
 }
 
-pub fn key_claim_to_request(tpl: (Uuid, KeysClaimRequest)) -> Result<String, Error> {
+pub fn key_claim_to_request(tpl: (Box<TransactionId>, KeysClaimRequest)) -> Result<String, Error> {
     let (request_id, request) = tpl;
     key_claim_request_serialize(&request_id, &request)
 }
@@ -65,7 +64,7 @@ pub fn outgoing_req_to_json(r: OutgoingRequest) -> Result<String, Error> {
             "event_type": m.content.event_type().to_string(),
             "content": m.content,
         })),
-        KeysClaim(c) => key_claim_request_serialize(r.request_id(), c),
+        KeysClaim(c) => key_claim_request_serialize(r.request_id().into(), c),
         KeysBackup(b) => serde_json::to_string(&json!({
             "request_kind": RequestKind::KeysBackup,
             "request_id": r.request_id().to_string(),
@@ -78,13 +77,13 @@ pub fn outgoing_req_to_json(r: OutgoingRequest) -> Result<String, Error> {
 pub fn to_device_request_serialize(r: &ToDeviceRequest) -> Result<String, Error> {
     serde_json::to_string(&json!({
         "request_kind": RequestKind::ToDevice,
-        "request_id": r.txn_id_string(),
+        "request_id": r.txn_id.to_string(),
         "event_type": r.event_type.to_string(),
         "body": &r.messages,
     }))
 }
 
-fn key_claim_request_serialize(id: &Uuid, r: &KeysClaimRequest) -> Result<String, Error> {
+fn key_claim_request_serialize(id: &TransactionId, r: &KeysClaimRequest) -> Result<String, Error> {
     serde_json::to_string(&json!({
         "request_kind": RequestKind::KeysClaim,
         "request_id": id.to_string(),

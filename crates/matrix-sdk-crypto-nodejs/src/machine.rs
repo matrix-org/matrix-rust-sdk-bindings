@@ -14,31 +14,27 @@
 
 use std::{collections::BTreeMap, ops::Deref};
 
-use matrix_sdk_common::{deserialized_responses::AlgorithmInfo, uuid::Uuid};
+use matrix_sdk_common::{deserialized_responses::AlgorithmInfo};
 use matrix_sdk_crypto::{EncryptionSettings, OlmMachine as RSOlmMachine};
 use napi::Result;
 use napi_derive::napi;
-use ruma::{
-    api::{
-        client::r0::{
-            backup::add_backup_keys::Response as KeysBackupResponse,
-            keys::{
-                claim_keys::Response as KeysClaimResponse, get_keys::Response as KeysQueryResponse,
-                upload_keys::Response as KeysUploadResponse,
-                upload_signatures::Response as SignatureUploadResponse,
-            },
-            message::send_message_event::Response as RoomMessageResponse,
-            sync::sync_events::{DeviceLists as RumaDeviceLists, ToDevice},
-            to_device::send_event_to_device::Response as ToDeviceResponse,
+use ruma::{api::{
+    client::r0::{
+        backup::add_backup_keys::Response as KeysBackupResponse,
+        keys::{
+            claim_keys::Response as KeysClaimResponse, get_keys::Response as KeysQueryResponse,
+            upload_keys::Response as KeysUploadResponse,
+            upload_signatures::Response as SignatureUploadResponse,
         },
-        IncomingResponse,
+        message::send_message_event::Response as RoomMessageResponse,
+        sync::sync_events::{DeviceLists as RumaDeviceLists, ToDevice},
+        to_device::send_event_to_device::Response as ToDeviceResponse,
     },
-    events::{
-        room::encrypted::RoomEncryptedEventContent, AnyMessageEventContent, EventContent,
-        SyncMessageEvent,
-    },
-    DeviceKeyAlgorithm, RoomId, UInt, UserId,
-};
+    IncomingResponse,
+}, events::{
+    room::encrypted::RoomEncryptedEventContent, AnyMessageEventContent, EventContent,
+    SyncMessageEvent,
+}, DeviceKeyAlgorithm, RoomId, UInt, UserId, TransactionId};
 use serde_json::{value::RawValue, Map, Value};
 use tokio::runtime::Runtime;
 
@@ -188,7 +184,7 @@ impl SledBackedOlmMachine {
         request_kind: RequestKind,
         response_body: String,
     ) -> Result<()> {
-        let req_id = Uuid::parse_str(request_id.as_str()).expect("Failed to parse request ID");
+        let req_id = Box::<TransactionId>::from(request_id.as_str());
         let response = response_from_string(response_body.as_str());
 
         let response: OwnedResponse = match request_kind {
