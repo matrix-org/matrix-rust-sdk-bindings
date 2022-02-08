@@ -49,7 +49,7 @@ pub fn outgoing_req_to_json(r: OutgoingRequest) -> Result<String, Error> {
         KeysQuery(k) => serde_json::to_string(&json!({
             "request_kind": RequestKind::KeysQuery,
             "request_id": r.request_id().to_string(),
-            "users": k.device_keys.keys().map(|u| u.to_string()).collect::<String>(),
+            "users": k.device_keys.keys().map(|u| u.to_string()).collect::<Vec<String>>(),
         })),
         ToDeviceRequest(t) => to_device_request_serialize(t),
         SignatureUpload(s) => serde_json::to_string(&json!({
