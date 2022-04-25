@@ -106,17 +106,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Enter folder
+      - name: Build
         run: |
-          ls -l
           cd crates/matrix-sdk-crypto-nodejs/
-          ls -l
-
-          docker pull ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-          docker tag ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine builder
-
+          docker build -f release/Dockerfile.linux -t builder .
           docker run --rm -v $(pwd):/build -w /build builder yarn --ignore-scripts 
-          docker run --rm -v $(pwd):/build -w /build builder yarn build:linux:x64:musl
+          docker run --rm -v $(pwd):/build -w /build -e RUSTFLAGS="-C target-feature=-crt-static" builder yarn build:linux:x64:musl
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
