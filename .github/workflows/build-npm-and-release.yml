@@ -7,6 +7,7 @@ env:
   push:
     branches:
       - main
+      - build-npm-with-ci # will need to remove before merge but just so can link to my ci running
     tags-ignore:
       - '**'
     paths-ignore:
@@ -87,8 +88,6 @@ jobs:
           docker build -f release/Dockerfile.linux -t builder .
           docker run --rm -v $(pwd):/build -w /build builder yarn --ignore-scripts 
           docker run --rm -v $(pwd):/build -w /build builder yarn build:linux
-          ls -l
-          ls -l lib
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
