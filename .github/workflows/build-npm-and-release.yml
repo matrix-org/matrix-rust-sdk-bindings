@@ -1,0 +1,174 @@
+name: Build NPM Package
+env:
+  DEBUG: napi:*
+  APP_NAME: package-template
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
+'on':
+  push:
+    branches:
+      - main
+    tags-ignore:
+      - '**'
+    paths-ignore:
+      - '**/*.md'
+      - LICENSE
+      - '**/*.gitignore'
+      - .editorconfig
+      - docs/**
+  pull_request: null
+jobs:
+  x86_64-apple-darwin:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          toolchain: stable
+          target: x86_64-apple-darwin
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          #check-latest: true
+          #cache: yarn
+          architecture: x64
+      - name: Build
+        run: |
+          cd crates/matrix-sdk-crypto-nodejs/
+          yarn --ignore-scripts
+          yarn build:darwin:x64
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: index.darwin-x64.node
+          path: crates/matrix-sdk-crypto-nodejs/lib/index.darwin-x64.node
+          if-no-files-found: error
+  aarch64-apple-darwin:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          toolchain: stable
+          target: aarch64-apple-darwin
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          architecture: x64
+      - name: Build
+        run: |
+          cd crates/matrix-sdk-crypto-nodejs/
+          yarn --ignore-scripts
+          yarn build:darwin:aarch64
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: index.darwin-arm64.node
+          path: crates/matrix-sdk-crypto-nodejs/lib/index.darwin-arm64.node
+          if-no-files-found: error
+
+  x86_64-unknown-linux-gnu:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: |
+          cd crates/matrix-sdk-crypto-nodejs/
+          docker build -f release/Dockerfile.linux -t builder .
+          docker run --rm -v $(pwd):/build -w /build builder yarn --ignore-scripts 
+          docker run --rm -v $(pwd):/build -w /build builder yarn build:linux
+          ls -l
+          ls -l lib
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: index.linux-ia32-gnu.node
+          path: crates/matrix-sdk-crypto-nodejs/lib/index.linux-ia32-gnu.node
+          if-no-files-found: error
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: index.linux-x64-gnu.node
+          path: crates/matrix-sdk-crypto-nodejs/lib/index.linux-x64-gnu.node
+          if-no-files-found: error
+
+  x86_64-unknown-linux-musl:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Enter folder
+        run: |
+          ls -l
+          cd crates/matrix-sdk-crypto-nodejs/
+          ls -l
+
+          docker pull ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+          docker tag ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine builder
+
+          docker run --rm -v $(pwd):/build -w /build builder yarn --ignore-scripts 
+          docker run --rm -v $(pwd):/build -w /build builder yarn build:linux:x64:musl
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: index.linux-x64-musl.node
+          path: crates/matrix-sdk-crypto-nodejs/lib/index.linux-x64-musl.node
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs:
+      - x86_64-apple-darwin
+      - aarch64-apple-darwin
+      - x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          check-latest: true
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - name: Make npm package
+        run: |
+          echo "Bringing in artifacts"
+          mkdir crates/matrix-sdk-crypto-nodejs/lib
+          ls -l artifacts
+          mv artifacts/* crates/matrix-sdk-crypto-nodejs/lib/
+          
+          echo "Installing npm dependencies"
+          cd crates/matrix-sdk-crypto-nodejs/
+          yarn install --ignore-scripts --frozen-lockfile --registry https://registry.npmjs.org --network-timeout 300000
+          
+          echo "Compiling ts to js for releasing"
+          yarn build:ts
+          ls -l lib
+ 
+          if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
+          then
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+            npm publish --access public
+          elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
+          then
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+            npm publish --tag next --access public
+          else
+            echo "Not a release, skipping publish"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
