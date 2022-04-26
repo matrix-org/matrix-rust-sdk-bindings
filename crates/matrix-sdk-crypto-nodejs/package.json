@@ -36,7 +36,7 @@
     "build:debug": "yarn build:types && napi build --js ./lib/napi-module.js --dts napi-module.d.ts ./lib",
     "build:ts": "tsc",
     "build:test": "napi build",
-    "prepublishOnly": "yarn build:ts && ./prepare-release.sh",
+    "prepublishOnly": "yarn build:ts",
     "postinstall": "node check-exists.js"
   },
   "dependencies": {
