@@ -7,7 +7,6 @@ env:
   push:
     branches:
       - main
-      - build-npm-with-ci # will need to remove before merge but just so can link to my ci running
     tags-ignore:
       - '**'
     paths-ignore:
