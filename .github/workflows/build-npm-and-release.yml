@@ -142,7 +142,9 @@ jobs:
           echo "Bringing in artifacts"
           mkdir crates/matrix-sdk-crypto-nodejs/lib
           ls -l artifacts
-          mv artifacts/* crates/matrix-sdk-crypto-nodejs/lib/
+          
+          # Upload puts them inside folders so yank just the files out and move into lib folder
+          find artifacts -type f -exec mv {} crates/matrix-sdk-crypto-nodejs/lib/ \;
           
           echo "Installing npm dependencies"
           cd crates/matrix-sdk-crypto-nodejs/
@@ -152,14 +154,11 @@ jobs:
           yarn build:ts
           ls -l lib
  
+          # Probably need to change this to how ever you release
           if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
           then
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
             npm publish --access public
-          elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
-          then
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-            npm publish --tag next --access public
           else
             echo "Not a release, skipping publish"
           fi
