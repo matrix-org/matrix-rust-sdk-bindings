@@ -99,6 +99,12 @@ jobs:
           name: index.linux-x64-gnu.node
           path: crates/matrix-sdk-crypto-nodejs/lib/index.linux-x64-gnu.node
           if-no-files-found: error
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: napi-module.js
+          path: crates/matrix-sdk-crypto-nodejs/lib/napi-module.js
+          if-no-files-found: error
 
   x86_64-unknown-linux-musl:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
