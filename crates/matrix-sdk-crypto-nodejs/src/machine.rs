@@ -14,27 +14,31 @@
 
 use std::{collections::BTreeMap, ops::Deref};
 
-use matrix_sdk_common::{deserialized_responses::AlgorithmInfo};
+use matrix_sdk_common::deserialized_responses::AlgorithmInfo;
 use matrix_sdk_crypto::{EncryptionSettings, OlmMachine as RSOlmMachine};
 use napi::Result;
 use napi_derive::napi;
-use ruma::{api::{
-    client::r0::{
-        backup::add_backup_keys::Response as KeysBackupResponse,
-        keys::{
-            claim_keys::Response as KeysClaimResponse, get_keys::Response as KeysQueryResponse,
-            upload_keys::Response as KeysUploadResponse,
-            upload_signatures::Response as SignatureUploadResponse,
+use ruma::{
+    api::{
+        client::r0::{
+            backup::add_backup_keys::Response as KeysBackupResponse,
+            keys::{
+                claim_keys::Response as KeysClaimResponse, get_keys::Response as KeysQueryResponse,
+                upload_keys::Response as KeysUploadResponse,
+                upload_signatures::Response as SignatureUploadResponse,
+            },
+            message::send_message_event::Response as RoomMessageResponse,
+            sync::sync_events::{DeviceLists as RumaDeviceLists, ToDevice},
+            to_device::send_event_to_device::Response as ToDeviceResponse,
         },
-        message::send_message_event::Response as RoomMessageResponse,
-        sync::sync_events::{DeviceLists as RumaDeviceLists, ToDevice},
-        to_device::send_event_to_device::Response as ToDeviceResponse,
+        IncomingResponse,
     },
-    IncomingResponse,
-}, events::{
-    room::encrypted::RoomEncryptedEventContent, AnyMessageEventContent, EventContent,
-    SyncMessageEvent,
-}, DeviceKeyAlgorithm, RoomId, UInt, UserId, TransactionId};
+    events::{
+        room::encrypted::RoomEncryptedEventContent, AnyMessageEventContent, EventContent,
+        SyncMessageEvent,
+    },
+    DeviceKeyAlgorithm, RoomId, TransactionId, UInt, UserId,
+};
 use serde_json::{value::RawValue, Map, Value};
 use tokio::runtime::Runtime;
 
@@ -339,12 +343,12 @@ impl SledBackedOlmMachine {
             serde_json::from_str(event.as_str()).expect("Failed to parse event");
         let room_id = Box::<RoomId>::try_from(room_id).expect("Failed to parse room ID");
 
-        let decrypted = self
-            .runtime
-            .block_on(self.inner.decrypt_room_event(&event, &room_id));
+        let decrypted = self.runtime.block_on(self.inner.decrypt_room_event(&event, &room_id));
 
         if !decrypted.is_ok() {
-            return Err(napi::Error::from_reason("Decryption failed: ".to_owned() + &decrypted.err().unwrap().to_string()));
+            return Err(napi::Error::from_reason(
+                "Decryption failed: ".to_owned() + &decrypted.err().unwrap().to_string(),
+            ));
         }
 
         let decrypted = decrypted.unwrap();
