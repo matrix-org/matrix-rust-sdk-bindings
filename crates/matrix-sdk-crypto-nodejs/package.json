@@ -20,11 +20,12 @@
     "yarn.lock"
   ],
   "scripts": {
-    "rust:targets": "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc x86_64-unknown-linux-gnu i686-unknown-linux-gnu x86_64-apple-darwin",
+    "rust:targets": "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu i686-unknown-linux-gnu x86_64-apple-darwin",
     "build:win": "yarn build:win:x64 && yarn build:win:ia32",
     "build:win:x64": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target x86_64-pc-windows-msvc ./lib",
     "build:win:ia32": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target i686-pc-windows-msvc ./lib",
-    "build:linux": "yarn build:linux:x64 && yarn build:linux:ia32",
+    "build:linux": "yarn build:linux:x64 && yarn build:linux:ia32 && yarn build:linux:aarch64",
+    "build:linux:aarch64": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target aarch64-unknown-linux-gnu ./lib",
     "build:linux:x64": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target x86_64-unknown-linux-gnu ./lib",
     "build:linux:ia32": "napi build --js ./lib/napi-module.js --dts napi-module.d.ts --release --platform --target i686-unknown-linux-gnu ./lib",
     "build:darwin": "yarn build:darwin:x64",
