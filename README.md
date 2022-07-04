@@ -1,5 +1,5 @@
-# matrix-rust-sdk-bindings
-Language bindings for matrix-rust-sdk
+# Deprecated
 
+This repo is replaced with proper bindings supplied by the rust-sdk itself: https://github.com/matrix-org/matrix-rust-sdk/tree/main/bindings/matrix-sdk-crypto-nodejs
 
-**Work in progress**
+Please use that instead, as these bindings are not supported.
